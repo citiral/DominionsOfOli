@@ -27,8 +27,8 @@ let game = {
         width: 8,
         height: 10,
         speed: 1000/60,
-        holeChance: 0.35,
-        joinChance: 0.6,
+        holeChance: 0.25,
+        joinChance: 0.5,
     },
 
     interation: {
@@ -370,3 +370,4 @@ setInterval(() => {
 }, game.speed);
 
 generateNextLine(game.settings.holeChance, game.settings.joinChance)
+advanceGameState()
