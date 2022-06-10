@@ -8,9 +8,12 @@ const STATE_FALLING_POST = 5
 const STATE_FADING_POST = 6
 const STATE_GAME_OVER = 7
 
+
+
+
 let game = {
     general: {
-        blockSize: 50,
+        blockSize: Math.min(document.body.scrollHeight / 11, document.body.scrollWidth / 8),
         colors: [
             "red",
             "green",
@@ -131,8 +134,8 @@ cv.addEventListener("pointerdown", (event) => {
     if (game.state == STATE_IDLE) {
         let rect = cv.getBoundingClientRect()
 
-        let clickX = Math.floor((event.clientX - rect.left) / 50)
-        let clickY = Math.floor((rect.bottom - event.clientY - rect.top) / 50) - 1
+        let clickX = Math.floor((event.clientX - rect.left) / game.general.blockSize)
+        let clickY = Math.floor((rect.bottom - event.clientY - rect.top) / game.general.blockSize) - 1
 
         target = game.currentBlocks.find(block => block.line == clickY && block.offset <= clickX && block.offset + block.width > clickX)
         if (target != null) {
