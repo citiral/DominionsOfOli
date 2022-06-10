@@ -27,8 +27,8 @@ let game = {
         width: 8,
         height: 10,
         speed: 1000/60,
-        holeChance: 0.3,
-        joinChance: 0.3,
+        holeChance: 0.35,
+        joinChance: 0.6,
     },
 
     interation: {
@@ -44,32 +44,7 @@ let game = {
         animations: [],
     },
 
-    currentBlocks: [
-        {
-            width: 6,
-            offset: 2,
-            color: 'green',
-            line: 0
-        },
-        {
-            width: 6,
-            offset: 0,
-            color: 'green',
-            line: 1
-        },
-        {
-            width: 2,
-            offset: 5,
-            color: 'green',
-            line: 2
-        },
-        {
-            width: 2,
-            offset: 0,
-            color: 'green',
-            line: 2
-        }
-    ],
+    currentBlocks: [],
 
     nextLine: []
 }
