@@ -127,7 +127,7 @@ function generateNextLine(holeChance, joinChance) {
     }
 }
 
-cv.addEventListener("mousedown", (event) => {
+cv.addEventListener("pointerdown", (event) => {
     if (game.state == STATE_IDLE) {
         let rect = cv.getBoundingClientRect()
 
@@ -144,7 +144,7 @@ cv.addEventListener("mousedown", (event) => {
     }
 })
 
-cv.addEventListener("mouseup", (event) => {
+cv.addEventListener("pointerup", (event) => {
     if (game.state == STATE_IDLE && game.interation.isDragging) {
         game.interation.isDragging = false
 
@@ -155,7 +155,7 @@ cv.addEventListener("mouseup", (event) => {
     }
 })
 
-cv.addEventListener("mousemove", (event) => {
+cv.addEventListener("pointermove", (event) => {
     if (game.state == STATE_IDLE) {
         game.interation.dragNow = event.screenX
     }
