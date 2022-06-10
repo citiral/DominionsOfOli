@@ -140,27 +140,32 @@ cv.addEventListener("pointerdown", (event) => {
         target = game.currentBlocks.find(block => block.line == clickY && block.offset <= clickX && block.offset + block.width > clickX)
         if (target != null) {
             game.interation.isDragging = true
-            game.interation.dragStart = event.screenX
-            game.interation.dragNow = event.screenX
+            game.interation.dragStart = event.clientX
+            game.interation.dragNow = event.clientX
+            console.log(event.clientX)
             game.interation.dragTarget = target
         }
     }
 })
 
 cv.addEventListener("pointerup", (event) => {
+    console.log(event)
     if (game.state == STATE_IDLE && game.interation.isDragging) {
         game.interation.isDragging = false
 
         offsetPixels = game.interation.dragNow - game.interation.dragStart
-        offsetGrid = Math.round(offsetPixels / 50)
+        offsetGrid = Math.round(offsetPixels / game.general.blockSize)
+        console.log(offsetPixels)
 
+        console.log(offsetGrid)
         doMoveBlockAction(game.interation.dragTarget, game.interation.dragTarget.offset + offsetGrid)
     }
 })
 
 cv.addEventListener("pointermove", (event) => {
+    console.log(event.clientX)
     if (game.state == STATE_IDLE) {
-        game.interation.dragNow = event.screenX
+        game.interation.dragNow = event.clientX
     }
 })
 
