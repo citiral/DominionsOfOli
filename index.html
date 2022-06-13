@@ -4,9 +4,16 @@
 </head>
 
 <body style="margin: 0">
-    <div style="width: 100%; margin: auto;">
-        <canvas id="canvas" width="400" height="500" style="border:1px solid #000000; touch-action: none;"></canvas>
+    <p id="score" style="display: inline">Score: 0</p>
+    Level: 1
+    <button onclick="resetGame()">Reset</button>
+    <button>Options</button>
+    <div style="display: flex">
+        <div style="width: 100%; margin: auto;">
+            <canvas id="canvas" width="400" height="500" style="border:1px solid #000000; touch-action: none;"></canvas>
+        </div>
     </div>
+      
     <script src="source.js"></script>
 </body>
 </html>

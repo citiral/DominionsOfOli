@@ -8,8 +8,7 @@ const STATE_FALLING_POST = 5
 const STATE_FADING_POST = 6
 const STATE_GAME_OVER = 7
 
-
-
+const ASSETS_IMAGES = [];
 
 let game = {
     general: {
@@ -49,7 +48,9 @@ let game = {
 
     currentBlocks: [],
 
-    nextLine: []
+    nextLine: [],
+
+    score: 0,
 }
 
 cv.width = game.settings.width * game.general.blockSize
@@ -90,8 +91,16 @@ function drawBlock(block) {
         }
     }
 
-    ctx.fillRect(block.offset * game.general.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.general.blockSize + extraY,  block.width * game.general.blockSize, game.general.blockSize)
-    ctx.strokeRect(block.offset * game.general.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.general.blockSize + extraY,  block.width * game.general.blockSize, game.general.blockSize)
+    if (block.width == 1) {
+        ctx.drawImage(ASSETS_IMAGES['single'], block.offset * game.general.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.general.blockSize + extraY, game.general.blockSize, game.general.blockSize)
+    } else {
+        for (let i = 0 ; i < block.width ; i++) {
+            let asset = i == 0 ? 'begin' :
+                        i == block.width - 1 ? 'end' :
+                        'middle'
+            ctx.drawImage(ASSETS_IMAGES[asset], (block.offset + i) * game.general.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.general.blockSize + extraY, game.general.blockSize, game.general.blockSize)
+        }
+    }
 }
 
 function generateNextLine(holeChance, joinChance) {
@@ -142,30 +151,48 @@ cv.addEventListener("pointerdown", (event) => {
             game.interation.isDragging = true
             game.interation.dragStart = event.clientX
             game.interation.dragNow = event.clientX
-            console.log(event.clientX)
             game.interation.dragTarget = target
         }
     }
 })
 
-cv.addEventListener("pointerup", (event) => {
-    console.log(event)
+window.addEventListener("pointerup", (event) => {
     if (game.state == STATE_IDLE && game.interation.isDragging) {
         game.interation.isDragging = false
 
         offsetPixels = game.interation.dragNow - game.interation.dragStart
         offsetGrid = Math.round(offsetPixels / game.general.blockSize)
-        console.log(offsetPixels)
 
-        console.log(offsetGrid)
         doMoveBlockAction(game.interation.dragTarget, game.interation.dragTarget.offset + offsetGrid)
     }
 })
 
 cv.addEventListener("pointermove", (event) => {
-    console.log(event.clientX)
-    if (game.state == STATE_IDLE) {
+    if (game.state == STATE_IDLE && game.interation.isDragging) {
         game.interation.dragNow = event.clientX
+
+        offsetPixels = game.interation.dragNow - game.interation.dragStart
+        offsetGridCeil = Math.ceil(offsetPixels / game.general.blockSize)
+        offsetGridFloor = Math.floor(offsetPixels / game.general.blockSize)
+        let target = game.interation.dragTarget
+
+        if (offsetGridCeil > 0) {
+            for (let i = 0 ; i <= offsetGridCeil ; i++) {
+                if (target.offset + target.width + i > game.settings.width || wouldBlockOverlap(target, target.line, target.offset + i)) {
+                    game.interation.dragNow = (i-1) * game.general.blockSize + game.interation.dragStart
+                    break
+                }
+            }
+        }
+offsetGridFloor
+        if (offsetGridFloor < 0) {
+            for (let i = 0 ; i >= offsetGridFloor ; i--) {
+                if (target.offset + i < 0 || wouldBlockOverlap(target, target.line, target.offset + i)) {
+                    game.interation.dragNow = (i+1) * game.general.blockSize + game.interation.dragStart
+                    break
+                }
+            }
+        }
     }
 })
 
@@ -236,6 +263,8 @@ function doFadingAnimations() {
         }
 
         if (fadeLine) {
+            game.score += 1
+            updateScore()
             blocks.forEach(block => {
                 hasFading = true
                 game.animation.animations.push({
@@ -352,30 +381,60 @@ function wouldBlockOverlap(block, line, pos) {
     )
 }
 
-
-setInterval(() => {
-    if (game.animation.isAnimating) {
-        game.animation.animationTime += game.settings.speed / 1000
-        if (game.animation.animations.every(animation => animation.duration <= game.animation.animationTime)) {
-            commitAnimations()
-            advanceGameState()
+function startGame() {
+    setInterval(() => {
+        if (game.animation.isAnimating) {
+            game.animation.animationTime += game.settings.speed / 1000
+            if (game.animation.animations.every(animation => animation.duration <= game.animation.animationTime)) {
+                commitAnimations()
+                advanceGameState()
+            }
         }
-    }
 
-    for (let x = 0; x < game.settings.width ; x++) {
-        for (let y = -1 ; y < game.settings.height ; y++) {
-            drawRect(x, y, 1, 1, 'black', 'grey')
+        for (let x = 0; x < game.settings.width ; x++) {
+            for (let y = -1 ; y < game.settings.height ; y++) {
+                drawRect(x, y, 1, 1, 'black', 'grey')
+            }
         }
-    }
 
-    game.nextLine.forEach(block => {
-        drawRect(block.offset, block.line, block.width, 1, 'grey', 'black')
-    })
+        game.nextLine.forEach(block => {
+            drawRect(block.offset, block.line, block.width, 1, 'grey', 'black')
+        })
+        
+        game.currentBlocks.forEach(block => {
+            drawBlock(block)
+        })
+    }, game.speed);
     
-    game.currentBlocks.forEach(block => {
-        drawBlock(block)
-    })
-}, game.speed);
+    resetGame()
+}
 
-generateNextLine(game.settings.holeChance, game.settings.joinChance)
-advanceGameState()
+function resetGame() {
+    game.currentBlocks = []
+    game.nextLine = []
+
+    generateNextLine(game.settings.holeChance, game.settings.joinChance)
+    advanceGameState()
+}
+
+function loadAsset(assetName) {
+    return new Promise((resolve, reject) => {
+        var image = new Image()
+        image.onload = function() {
+            resolve(image)
+        }
+        image.src = 'assets/' + assetName + '.png'
+    })
+}
+
+function updateScore() {
+    document.getElementById('score').innerText = "Score: " + game.score
+}
+
+(async function(assets) {
+    for (let i = 0 ; i < assets.length ; i++) {
+        ASSETS_IMAGES[assets[i]] = await loadAsset(assets[i])
+    }
+    console.log("Starting!")
+    startGame()
+})(['begin', 'end', 'middle', 'single'])
