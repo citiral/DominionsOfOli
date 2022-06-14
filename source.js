@@ -20,7 +20,9 @@ let game = {
             "purple",
             "yellow",
             "blue",
-        ]
+        ],
+        fallAnimationSpeed: 10,
+        pushAnimationSpeed: 5,
     },
 
     state: STATE_IDLE,
@@ -28,7 +30,6 @@ let game = {
     settings: {
         width: 8,
         height: 10,
-        speed: 1000/60,
         holeChance: 0.25,
         joinChance: 0.5,
     },
@@ -51,6 +52,9 @@ let game = {
     nextLine: [],
 
     score: 0,
+
+    lastUpdate: null,
+    deltaTime: 0
 }
 
 cv.width = game.settings.width * game.general.blockSize
@@ -85,7 +89,7 @@ function drawBlock(block) {
             if (time < 0) {
                 time = 0
             }
-            extraY += animation.direction * time * game.general.blockSize
+            extraY += animation.direction * animation.speed * time * game.general.blockSize
         } else if (animation != null && animation.type == 'fade') {
             ctx.globalAlpha = (1 - game.animation.animationTime / animation.duration )
         }
@@ -238,7 +242,8 @@ function doFallingAnimations() {
                         type: 'fall',
                         target: block,
                         direction: -1,
-                        duration: block.line - best,
+                        duration: (block.line - best) / game.general.fallAnimationSpeed,
+                        speed: game.general.fallAnimationSpeed,
                     })
                     block.line -= block.line - best
                     hasFalling = true
@@ -270,7 +275,7 @@ function doFadingAnimations() {
                 game.animation.animations.push({
                     type: 'fade',
                     target: block,
-                    duration: 2
+                    duration: 0.5,
                 })
             })
         }
@@ -293,7 +298,8 @@ function doBlockUpAnimations() {
             type: 'fall',
             target: block,
             direction: 1,
-            duration: 1,
+            duration: 1 / game.general.pushAnimationSpeed,
+            speed: game.general.pushAnimationSpeed
         })
         block.line += 1
     })
@@ -381,40 +387,56 @@ function wouldBlockOverlap(block, line, pos) {
     )
 }
 
-function startGame() {
-    setInterval(() => {
-        if (game.animation.isAnimating) {
-            game.animation.animationTime += game.settings.speed / 1000
-            if (game.animation.animations.every(animation => animation.duration <= game.animation.animationTime)) {
-                commitAnimations()
-                advanceGameState()
-            }
-        }
+function tick(timestamp) {
+    if (game.lastUpdate === undefined) {
+        game.deltaTime = timestamp
+    } else {
+        game.deltaTime = timestamp - game.lastUpdate
+    }
+    game.lastUpdate = timestamp
 
-        for (let x = 0; x < game.settings.width ; x++) {
-            for (let y = -1 ; y < game.settings.height ; y++) {
-                drawRect(x, y, 1, 1, 'black', 'grey')
-            }
+    if (game.animation.isAnimating) {
+        game.animation.animationTime += game.deltaTime / 1000
+        if (game.animation.animations.every(animation => animation.duration <= game.animation.animationTime)) {
+            commitAnimations()
+            advanceGameState()
         }
+    }
 
-        game.nextLine.forEach(block => {
-            drawRect(block.offset, block.line, block.width, 1, 'grey', 'black')
-        })
-        
-        game.currentBlocks.forEach(block => {
-            drawBlock(block)
-        })
-    }, game.speed);
+    for (let x = 0; x < game.settings.width ; x++) {
+        for (let y = -1 ; y < game.settings.height ; y++) {
+            drawRect(x, y, 1, 1, 'black', 'grey')
+        }
+    }
+
+    game.nextLine.forEach(block => {
+        drawRect(block.offset, block.line, block.width, 1, 'grey', 'black')
+    })
     
-    resetGame()
+    game.currentBlocks.forEach(block => {
+        drawBlock(block)
+    })
+
+    localStorage.setItem("game", JSON.stringify(game))
+    window.requestAnimationFrame(tick)
+}
+
+function startGame() {
+    window.requestAnimationFrame(tick)
 }
 
 function resetGame() {
     game.currentBlocks = []
     game.nextLine = []
+    game.state = STATE_IDLE
+    game.interation.isDragging = false
+    game.animation.isAnimating = false
+    game.score = 0
 
     generateNextLine(game.settings.holeChance, game.settings.joinChance)
     advanceGameState()
+
+    updateScore()
 }
 
 function loadAsset(assetName) {
@@ -435,6 +457,14 @@ function updateScore() {
     for (let i = 0 ; i < assets.length ; i++) {
         ASSETS_IMAGES[assets[i]] = await loadAsset(assets[i])
     }
-    console.log("Starting!")
-    startGame()
+
+    const g = localStorage.getItem("game")
+    if (g !== undefined) {
+        console.log("loading game")
+        game = JSON.parse(g)
+        startGame()
+    } else {
+        resetGame()
+        startGame()
+    }
 })(['begin', 'end', 'middle', 'single'])
