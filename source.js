@@ -21,7 +21,7 @@ let game = {
             "yellow",
             "blue",
         ],
-        fallAnimationSpeed: 10,
+        fallAnimationSpeed: 9.5,
         pushAnimationSpeed: 5,
     },
 
@@ -275,7 +275,7 @@ function doFadingAnimations() {
                 game.animation.animations.push({
                     type: 'fade',
                     target: block,
-                    duration: 0.5,
+                    duration: 0.3,
                 })
             })
         }
@@ -459,7 +459,7 @@ function updateScore() {
     }
 
     const g = localStorage.getItem("game")
-    if (g !== undefined) {
+    if (g != null) {
         console.log("loading game")
         game = JSON.parse(g)
         startGame()
