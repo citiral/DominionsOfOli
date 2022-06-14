@@ -11,7 +11,7 @@ const STATE_GAME_OVER = 7
 const ASSETS_IMAGES = [];
 
 let game = {
-    general: {
+    settings: {
         blockSize: Math.min(document.body.scrollHeight / 11, document.body.scrollWidth / 8),
         colors: [
             "red",
@@ -23,16 +23,13 @@ let game = {
         ],
         fallAnimationSpeed: 9.5,
         pushAnimationSpeed: 5,
-    },
-
-    state: STATE_IDLE,
-
-    settings: {
         width: 8,
         height: 10,
         holeChance: 0.25,
         joinChance: 0.5,
     },
+
+    state: STATE_IDLE,
 
     interation: {
         isDragging: false,
@@ -57,8 +54,8 @@ let game = {
     deltaTime: 0
 }
 
-cv.width = game.settings.width * game.general.blockSize
-cv.height = (game.settings.height + 1) * game.general.blockSize
+cv.width = game.settings.width * game.settings.blockSize
+cv.height = (game.settings.height + 1) * game.settings.blockSize
 
 let ctx = cv.getContext("2d")
 
@@ -66,8 +63,8 @@ function drawRect(x, y, w, h, fill, stroke) {
     ctx.fillStyle = fill
     ctx.strokeStyle = stroke
     ctx.globalAlpha = 1
-    ctx.fillRect(x * game.general.blockSize, (game.settings.height - 1 - y) * game.general.blockSize, w * game.general.blockSize, h * game.general.blockSize)
-    ctx.strokeRect(x * game.general.blockSize, (game.settings.height - 1 - y) * game.general.blockSize, w * game.general.blockSize, h * game.general.blockSize)
+    ctx.fillRect(x * game.settings.blockSize, (game.settings.height - 1 - y) * game.settings.blockSize, w * game.settings.blockSize, h * game.settings.blockSize)
+    ctx.strokeRect(x * game.settings.blockSize, (game.settings.height - 1 - y) * game.settings.blockSize, w * game.settings.blockSize, h * game.settings.blockSize)
 }
 
 function drawBlock(block) {
@@ -89,20 +86,20 @@ function drawBlock(block) {
             if (time < 0) {
                 time = 0
             }
-            extraY += animation.direction * animation.speed * time * game.general.blockSize
+            extraY += animation.direction * animation.speed * time * game.settings.blockSize
         } else if (animation != null && animation.type == 'fade') {
             ctx.globalAlpha = (1 - game.animation.animationTime / animation.duration )
         }
     }
 
     if (block.width == 1) {
-        ctx.drawImage(ASSETS_IMAGES['single'], block.offset * game.general.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.general.blockSize + extraY, game.general.blockSize, game.general.blockSize)
+        ctx.drawImage(ASSETS_IMAGES['single'], block.offset * game.settings.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.settings.blockSize + extraY, game.settings.blockSize, game.settings.blockSize)
     } else {
         for (let i = 0 ; i < block.width ; i++) {
             let asset = i == 0 ? 'begin' :
                         i == block.width - 1 ? 'end' :
                         'middle'
-            ctx.drawImage(ASSETS_IMAGES[asset], (block.offset + i) * game.general.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.general.blockSize + extraY, game.general.blockSize, game.general.blockSize)
+            ctx.drawImage(ASSETS_IMAGES[asset], (block.offset + i) * game.settings.blockSize + extraX, (game.settings.height - 1 -  block.line) * game.settings.blockSize + extraY, game.settings.blockSize, game.settings.blockSize)
         }
     }
 }
@@ -116,21 +113,21 @@ function generateNextLine(holeChance, joinChance) {
         hasHoles |= isHole
 
         if (isHole && runLength > 0) {
-            let color = Math.floor(Math.random() * game.general.colors.length)
+            let color = Math.floor(Math.random() * game.settings.colors.length)
             game.nextLine.push({
                 width: runLength,
                 line: -1,
                 offset: x - runLength,
-                color: game.general.colors[color]
+                color: game.settings.colors[color]
             })
             runLength = 0
         } else if (((!isHole) && (x + 1) == game.settings.width) || (runLength > 0 && Math.random() < joinChance)) {
-            let color = Math.floor(Math.random() * game.general.colors.length)
+            let color = Math.floor(Math.random() * game.settings.colors.length)
             game.nextLine.push({
                 width: runLength + 1,
                 line: -1,
                 offset: x - runLength,
-                color: game.general.colors[color]
+                color: game.settings.colors[color]
             })
             runLength = 0
         } else if (!isHole) {
@@ -147,8 +144,8 @@ cv.addEventListener("pointerdown", (event) => {
     if (game.state == STATE_IDLE) {
         let rect = cv.getBoundingClientRect()
 
-        let clickX = Math.floor((event.clientX - rect.left) / game.general.blockSize)
-        let clickY = Math.floor((rect.bottom - event.clientY - rect.top) / game.general.blockSize) - 1
+        let clickX = Math.floor((event.clientX - rect.left) / game.settings.blockSize)
+        let clickY = Math.floor((rect.bottom - event.clientY - rect.top) / game.settings.blockSize) - 1
 
         target = game.currentBlocks.find(block => block.line == clickY && block.offset <= clickX && block.offset + block.width > clickX)
         if (target != null) {
@@ -165,7 +162,7 @@ window.addEventListener("pointerup", (event) => {
         game.interation.isDragging = false
 
         offsetPixels = game.interation.dragNow - game.interation.dragStart
-        offsetGrid = Math.round(offsetPixels / game.general.blockSize)
+        offsetGrid = Math.round(offsetPixels / game.settings.blockSize)
 
         doMoveBlockAction(game.interation.dragTarget, game.interation.dragTarget.offset + offsetGrid)
     }
@@ -176,14 +173,14 @@ cv.addEventListener("pointermove", (event) => {
         game.interation.dragNow = event.clientX
 
         offsetPixels = game.interation.dragNow - game.interation.dragStart
-        offsetGridCeil = Math.ceil(offsetPixels / game.general.blockSize)
-        offsetGridFloor = Math.floor(offsetPixels / game.general.blockSize)
+        offsetGridCeil = Math.ceil(offsetPixels / game.settings.blockSize)
+        offsetGridFloor = Math.floor(offsetPixels / game.settings.blockSize)
         let target = game.interation.dragTarget
 
         if (offsetGridCeil > 0) {
             for (let i = 0 ; i <= offsetGridCeil ; i++) {
                 if (target.offset + target.width + i > game.settings.width || wouldBlockOverlap(target, target.line, target.offset + i)) {
-                    game.interation.dragNow = (i-1) * game.general.blockSize + game.interation.dragStart
+                    game.interation.dragNow = (i-1) * game.settings.blockSize + game.interation.dragStart
                     break
                 }
             }
@@ -192,7 +189,7 @@ offsetGridFloor
         if (offsetGridFloor < 0) {
             for (let i = 0 ; i >= offsetGridFloor ; i--) {
                 if (target.offset + i < 0 || wouldBlockOverlap(target, target.line, target.offset + i)) {
-                    game.interation.dragNow = (i+1) * game.general.blockSize + game.interation.dragStart
+                    game.interation.dragNow = (i+1) * game.settings.blockSize + game.interation.dragStart
                     break
                 }
             }
@@ -242,8 +239,8 @@ function doFallingAnimations() {
                         type: 'fall',
                         target: block,
                         direction: -1,
-                        duration: (block.line - best) / game.general.fallAnimationSpeed,
-                        speed: game.general.fallAnimationSpeed,
+                        duration: (block.line - best) / game.settings.fallAnimationSpeed,
+                        speed: game.settings.fallAnimationSpeed,
                     })
                     block.line -= block.line - best
                     hasFalling = true
@@ -298,8 +295,8 @@ function doBlockUpAnimations() {
             type: 'fall',
             target: block,
             direction: 1,
-            duration: 1 / game.general.pushAnimationSpeed,
-            speed: game.general.pushAnimationSpeed
+            duration: 1 / game.settings.pushAnimationSpeed,
+            speed: game.settings.pushAnimationSpeed
         })
         block.line += 1
     })
@@ -342,11 +339,13 @@ function advanceGameState() {
             if (doFadingAnimations()) {
                 game.state = STATE_FADING_POST
             } else {
-                game.state = STATE_IDLE
 
                 if (game.currentBlocks.length == 0) {
                     doBlockUpAnimations()
                     game.state = STATE_PUSHING
+                } else {
+                    game.state = STATE_IDLE
+                    localStorage.setItem("game", JSON.stringify(game))
                 }
             }
         }
@@ -354,11 +353,12 @@ function advanceGameState() {
         if (doFadingAnimations()) {
             game.state = STATE_FADING_POST
         } else {
-            game.state = STATE_IDLE
-
             if (game.currentBlocks.length == 0) {
                 doBlockUpAnimations()
                 game.state = STATE_PUSHING
+            } else {
+                game.state = STATE_IDLE
+                localStorage.setItem("game", JSON.stringify(game))
             }
         }
     }
@@ -417,7 +417,6 @@ function tick(timestamp) {
         drawBlock(block)
     })
 
-    localStorage.setItem("game", JSON.stringify(game))
     window.requestAnimationFrame(tick)
 }
 
@@ -461,8 +460,12 @@ function updateScore() {
     const g = localStorage.getItem("game")
     if (g != null) {
         console.log("loading game")
-        game = JSON.parse(g)
+        const loaded = JSON.parse(g)
+        const oldgame = game
+        game = loaded
+        game.settings = oldgame.settings
         startGame()
+        updateScore()
     } else {
         resetGame()
         startGame()
